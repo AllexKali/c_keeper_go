@@ -1,0 +1,63 @@
+-- Таблица категорий
+CREATE TABLE category (
+    id SERIAL PRIMARY KEY,  -- Автоматически увеличиваемый ID 
+    name VARCHAR(255) NOT NULL 
+);
+
+-- Таблица меню
+CREATE TABLE menu (
+    id SERIAL PRIMARY KEY,  
+    name VARCHAR(255) NOT NULL,  
+    price DECIMAL(10, 2) NOT NULL,  -- Цена блюда с точностью до 2 знаков
+    description TEXT,  -- Описание блюда
+    category_id INTEGER REFERENCES category(id) ON DELETE SET NULL,  -- Внешний ключ на категорию
+    available_quantity INTEGER NOT NULL 
+);
+
+-- Вставка данных в таблицу категорий
+INSERT INTO category (name) VALUES
+('Супы'),
+('Основные блюда'),
+('Десерты'),
+('Напитки');
+
+-- Вставка данных в таблицу меню
+INSERT INTO menu (name, price, description, category_id, available_quantity) VALUES
+('Борщ', 120.50, 'Классический борщ с мясом и сметаной', 1, 50),
+('Пельмени', 150.00, 'Домашние пельмени с мясом', 2, 100),
+('Шоколадный торт', 200.00, 'Шоколадный торт с кремом', 3, 30),
+('Компот', 60.00, 'Сладкий домашний компот из лесных ягод', 4, 200);
+
+
+------------------------------------------------------------------------------------------------------
+-- Таблица столов
+CREATE TABLE tables (
+    id SERIAL PRIMARY KEY,  
+    number INTEGER NOT NULL UNIQUE  
+);
+
+-- Таблица заказов
+CREATE TABLE orders (
+    id SERIAL PRIMARY KEY,  
+    order_number VARCHAR(255) NOT NULL UNIQUE,  
+    menu_id INTEGER REFERENCES menu(id) ON DELETE CASCADE,  -- Внешний ключ на таблицу menu (с удалением связанных записей при удалении блюда)
+    quantity INTEGER NOT NULL,  -- Количество заказанных блюд
+    table_id INTEGER REFERENCES tables(id) ON DELETE CASCADE,  -- Внешний ключ на таблицу столов (с удалением заказов при удалении стола)
+    status VARCHAR(50) NOT NULL DEFAULT 'В ожидании'  -- по умолчанию 'В ожидании'
+);
+
+-- Вставка данных в таблицу столов
+INSERT INTO tables (number) VALUES
+(1),
+(2),
+(3),
+(4),
+(5);
+
+-- Вставка данных в таблицу заказов
+INSERT INTO orders (order_number, menu_id, quantity, table_id, status) VALUES
+('ORD001', 1, 2, 1, 'В ожидании'),  -- Заказ на 2 порции Борща, стол 1
+('ORD002', 2, 3, 2, 'Готово'),  -- Заказ на 3 порции Пельменей, стол 2
+('ORD003', 3, 1, 3, 'Готово'),  -- Заказ на 1 порцию Шоколадного торта, стол 3
+('ORD004', 4, 5, 4, 'В ожидании');  -- Заказ на 5 порций Компота, стол 4
+
