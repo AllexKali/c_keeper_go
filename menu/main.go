@@ -53,6 +53,7 @@ func main() {
 
 	// CRUD-операции
 	r.GET("/menu", getMenu)
+	r.GET("/menu/:id", getDishByID) // Добавлен эндпоинт для получения блюда по ID
 	r.POST("/menu", addDish)
 	r.DELETE("/menu/:id", deleteDish)
 	r.PUT("/menu/:id", updateDish)
@@ -70,6 +71,17 @@ func getMenu(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, menu)
+}
+
+// Получение блюда по ID
+func getDishByID(c *gin.Context) {
+	id := c.Param("id")
+	var dish Menu
+	if err := db.Preload("Category").First(&dish, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Dish not found"})
+		return
+	}
+	c.JSON(http.StatusOK, dish)
 }
 
 // Добавление блюда в меню
