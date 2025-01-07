@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -96,40 +97,58 @@ func getOrder(c *gin.Context) {
 	c.JSON(http.StatusOK, order)
 }
 
-// Обновление статуса заказа
 func UpdateOrderStatus(c *gin.Context) {
-	orderID := c.Param("id")
 	var order Order
-	if err := db.First(&order, orderID).Error; err != nil {
+	id := c.Param("id")
+
+	if err := db.First(&order, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Заказ не найден"})
 		return
 	}
 
-	var input struct {
+	var statusUpdate struct {
 		Status string `json:"status"`
 	}
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+
+	if err := c.ShouldBindJSON(&statusUpdate); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Некорректные данные для обновления"})
 		return
 	}
 
-	order.Status = input.Status
+	validStatuses := map[string]bool{"В процессе": true, "Завершен": true}
+	if !validStatuses[statusUpdate.Status] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Некорректный статус"})
+		return
+	}
+
+	order.Status = statusUpdate.Status
 	if err := db.Save(&order).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при обновлении заказа"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Статус заказа обновлен", "order": order})
 }
 
-// Удаление заказа
 func deleteOrder(c *gin.Context) {
-	orderID := c.Param("id")
-	if err := db.Delete(&Order{}, orderID).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	id := c.Param("id")
+	var order Order
+
+	if err := db.First(&order, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Заказ не найден"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при удалении заказа"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "Заказ удален"})
+
+	if err := db.Delete(&order).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при удалении заказа"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Заказ успешно удалён"})
 }
 
 // Получение описания блюда по ID заказа
