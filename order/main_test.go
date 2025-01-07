@@ -120,6 +120,31 @@ func TestGetOrderNotFound(t *testing.T) {
 	assert.Equal(t, "Заказ не найден", response["error"])
 }
 
+func TestDeleteOrder(t *testing.T) {
+	db = initTestDB()
+	r := gin.Default()
+	r.DELETE("/order/:id", deleteOrder)
+
+	// Создаем новый заказ
+	order := Order{ /* заполните тестовые данные */ }
+	db.Create(&order)
+
+	// Удаляем заказ
+	req, _ := http.NewRequest("DELETE", fmt.Sprintf("/order/%d", order.ID), nil)
+	w := httptest.NewRecorder()
+
+	r.ServeHTTP(w, req)
+
+	// Проверяем код ответа
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var response map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &response)
+
+	// Проверяем сообщение об успешном удалении
+	assert.Equal(t, "Заказ успешно удалён", response["message"])
+}
+
 // Тестирование обновления статуса заказа
 func TestUpdateOrderStatus(t *testing.T) {
 	db = initTestDB()
@@ -184,31 +209,6 @@ func TestUpdateOrderStatusInvalid(t *testing.T) {
 
 	// Проверяем сообщение об ошибке
 	assert.Equal(t, "Некорректный статус", response["error"])
-}
-
-func TestDeleteOrder(t *testing.T) {
-	db = initTestDB()
-	r := gin.Default()
-	r.DELETE("/order/:id", deleteOrder)
-
-	// Создаем новый заказ
-	order := Order{ /* заполните тестовые данные */ }
-	db.Create(&order)
-
-	// Удаляем заказ
-	req, _ := http.NewRequest("DELETE", fmt.Sprintf("/order/%d", order.ID), nil)
-	w := httptest.NewRecorder()
-
-	r.ServeHTTP(w, req)
-
-	// Проверяем код ответа
-	assert.Equal(t, http.StatusOK, w.Code)
-
-	var response map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &response)
-
-	// Проверяем сообщение об успешном удалении
-	assert.Equal(t, "Заказ успешно удалён", response["message"])
 }
 
 func TestDeleteOrderNotFound(t *testing.T) {

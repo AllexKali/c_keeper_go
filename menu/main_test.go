@@ -43,6 +43,21 @@ func TestGetMenu(t *testing.T) {
 	assert.NotEmpty(t, menu)
 }
 
+func TestDeleteDish(t *testing.T) {
+	initDatabase()
+	router := setupRouter()
+
+	// Создание mock-данных
+	dish := Menu{Name: "To Delete", Price: 15.0, Description: "To be deleted", AvailableQuantity: 5, CategoryID: 1}
+	db.Create(&dish)
+
+	req, _ := http.NewRequest("DELETE", "/menu/"+strconv.Itoa(int(dish.ID)), nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
 func TestAddDish(t *testing.T) {
 	initDatabase()
 	router := setupRouter()
@@ -69,21 +84,6 @@ func TestAddDish(t *testing.T) {
 	assert.Equal(t, newDish.Name, dish.Name)
 	assert.Equal(t, newDish.Price, dish.Price)
 	assert.Equal(t, newDish.Description, dish.Description)
-}
-
-func TestDeleteDish(t *testing.T) {
-	initDatabase()
-	router := setupRouter()
-
-	// Создание mock-данных
-	dish := Menu{Name: "To Delete", Price: 15.0, Description: "To be deleted", AvailableQuantity: 5, CategoryID: 1}
-	db.Create(&dish)
-
-	req, _ := http.NewRequest("DELETE", "/menu/"+strconv.Itoa(int(dish.ID)), nil)
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
 }
 
 func TestUpdateDish(t *testing.T) {
