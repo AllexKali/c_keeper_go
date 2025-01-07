@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -155,11 +156,19 @@ func getDishDescriptionByOrderID(c *gin.Context) {
 		return
 	}
 
+	// Извлекаем описание блюда
+	price, ok := menuItem["price"].(float64)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось извлечь цену блюда"})
+		return
+	}
+
 	// Возвращаем описание блюда
 	c.JSON(http.StatusOK, gin.H{
 		"order_id":    order.ID,
 		"menu_id":     order.MenuID,
 		"description": description,
+		"price":       price,
 	})
 }
 
@@ -167,6 +176,7 @@ func main() {
 	initDB()
 
 	r := gin.Default()
+	r.Use(cors.Default())
 
 	// CRUD-операции для заказов
 	r.POST("/order", createOrder)

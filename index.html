@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            margin: 20px;
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="section" id="order-section">
+        <h2>Orders</h2>
+        <button onclick="fetchOrders()">Load Orders</button>
+        <table>
+            <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Order Number</th>
+                <th>Menu ID</th>
+                <th>Quantity</th>
+                <th>Table ID</th>
+                <th>Status</th>
+                <th>Total Price</th>
+                <th>Description</th>
+            </tr>
+            </thead>
+            <tbody id="order-table">
+            <!-- Orders will be dynamically added here -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const orderServiceUrl = "http://localhost:5004"; // Your order service URL
+    const menuServiceUrl = "http://localhost:5003"; // Your menu service URL
+
+    // Fetch orders and display them
+    // Fetch orders and display them
+    async function fetchOrders() {
+        try {
+            const response = await fetch(`${orderServiceUrl}/orders`);
+            let orders = await response.json();
+
+            // Сортировка заказов по Order ID
+            orders.sort((a, b) => a.ID - b.ID);
+
+            const tableBody = document.getElementById("order-table");
+            tableBody.innerHTML = ""; // Clear existing rows
+
+            for (const order of orders) {
+                // Fetch menu details for each order's MenuID
+                const menuItem = await fetchMenuDetails(order.menu_id);
+                const totalPrice = menuItem.price * order.quantity; // Calculate total price
+
+                const row = `
+                <tr>
+                    <td>${order.ID}</td>
+                    <td>${order.order_number}</td>
+                    <td>${order.menu_id}</td>
+                    <td>${order.quantity}</td>
+                    <td>${order.table_id}</td>
+                    <td>${order.status}</td>
+                    <td>${totalPrice.toFixed(2)}</td> <!-- Displaying total price -->
+                    <td>${menuItem.description || "No description"}</td> <!-- Displaying description -->
+                </tr>
+            `;
+                tableBody.innerHTML += row;
+            }
+        } catch (error) {
+            alert("Failed to load orders: " + error.message);
+        }
+    }
+
+    // Fetch menu details for a specific menu item by ID
+    async function fetchMenuDetails(menuID) {
+        try {
+            const response = await fetch(`${menuServiceUrl}/menu/${menuID}`);
+            const menuItem = await response.json();
+            return menuItem;
+        } catch (error) {
+            console.error("Failed to fetch menu details: ", error);
+            return { description: "Error loading description", price: 0 }; // Fallback in case of error
+        }
+    }
+</script>
+</body>
+</html>

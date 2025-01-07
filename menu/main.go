@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"net/http"
-	"strconv"
-
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"log"
+	"net/http"
+	"strconv"
 )
 
 // Модели для таблиц
@@ -50,6 +50,7 @@ func main() {
 	initDatabase()
 
 	r := gin.Default()
+	r.Use(cors.Default())
 
 	// CRUD-операции
 	r.GET("/menu", getMenu)
